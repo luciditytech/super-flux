@@ -2,7 +2,6 @@
 
 require 'ostruct'
 require 'forwardable'
-require 'kafka'
 require 'super'
 
 require_relative 'flux/version'
