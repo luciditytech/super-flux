@@ -1,12 +1,11 @@
 # frozen_string_literal: true
 
-require_relative 'reactor/consumer_factory'
 require_relative 'reactor/topic_factory'
 
 module Super
   module Flux
     class Reactor
-      include AdapterResolver
+      include ConsumerResolver
 
       CONSUMPTION_OPTIONS = {
         automatically_mark_as_processed: false
@@ -20,26 +19,21 @@ module Super
         @task = task
         @state = :offline
         Signal.trap('INT') { stop }
-        setup_consumer
         setup_topics
       end
 
       def start
         @state = :online
-        @topics[0..-2].each { |topic| @consumer.subscribe(topic) }
-        @consumer.each_message(CONSUMPTION_OPTIONS) { |message| process(message) }
+        @topics[0..-2].each { |topic| consumer.subscribe(topic) }
+        consumer.each_message(CONSUMPTION_OPTIONS) { |message| process(message) }
       end
 
       def stop
-        @consumer.stop
+        consumer.stop
         @state = :offline
       end
 
       private
-
-      def setup_consumer
-        @consumer = ConsumerFactory.call(@task.settings)
-      end
 
       def setup_topics
         @topics = []
@@ -55,15 +49,15 @@ module Super
       end
 
       def throttle(message)
-        Governor.call(message, @consumer, stage_for(message.topic))
+        Governor.call(message, stage_for(message.topic))
       end
 
       def execute(message)
-        ExecuteTask.call(@task, message, @consumer)
+        ExecuteTask.call(@task, message)
       end
 
       def schedule_retry(message)
-        RetryTask.call(message, @consumer, next_topic_for(message.topic))
+        RetryTask.call(message, next_topic_for(message.topic))
       end
 
       def stage_for(topic)

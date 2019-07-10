@@ -5,12 +5,12 @@ module Super
     class Governor
       include Super::Service
       include LoggerResolver
+      include ConsumerResolver
 
-      def call(message, consumer, stage)
+      def call(message, stage)
         return if stage.zero?
 
         @message = message
-        @consumer = consumer
         @stage = stage
         return unless early?
 
@@ -37,7 +37,7 @@ module Super
 
       def wait
         logger.info("Early message - waiting #{wait_time} seconds")
-        @consumer.pause(@message.topic, @message.partition, timeout: wait_time)
+        consumer.pause(@message.topic, @message.partition, timeout: wait_time)
       end
     end
   end

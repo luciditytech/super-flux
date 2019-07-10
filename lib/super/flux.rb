@@ -8,6 +8,8 @@ require_relative 'flux/version'
 require_relative 'flux/errors'
 require_relative 'flux/logger_resolver'
 require_relative 'flux/adapter_resolver'
+require_relative 'flux/consumer_resolver'
+require_relative 'flux/consumer_factory'
 require_relative 'flux/configuration'
 require_relative 'flux/task'
 require_relative 'flux/reactor'
@@ -33,7 +35,12 @@ module Super
       configuration.adapter
     end
 
+    def self.consumer
+      @consumer
+    end
+
     def self.run(task)
+      @consumer = ConsumerFactory.call(task.settings)
       @reactor = Reactor.new(task)
       @reactor.start
     end

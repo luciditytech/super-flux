@@ -5,8 +5,9 @@ module Super
     class ExecuteTask
       include Super::Service
       include LoggerResolver
+      include ConsumerResolver
 
-      def call(task, message, consumer)
+      def call(task, message)
         task.call(message.value)
         consumer.mark_message_as_processed(message)
         true
