@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 RSpec.describe Super::Flux::Reactor do
-  describe '.start' do
+  describe '#start' do
     subject { instance.start }
 
     let(:instance) { described_class.new(task) }
