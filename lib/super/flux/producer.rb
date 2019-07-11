@@ -8,10 +8,21 @@ module Super
     class Producer
       include Super::Component
 
-      inst_writer :producer, :max_buffer_size
+      inst_writer :producer
       interface :configure, :boot, :produce, :deliver, :shutdown
 
+      %i[max_buffer_size topic].each do |method|
+        define_singleton_method(method) do |value|
+          configuration.send("#{method}=", value)
+        end
+      end
+
+      def self.configuration
+        @configuration ||= OpenStruct.new
+      end
+
       def initialize
+        @lock = Mutex.new
         at_exit { shutdown }
       end
 
@@ -21,24 +32,42 @@ module Super
 
       def configure(&block)
         block.call(self)
-        @buffer = Buffer.new(producer, max_buffer_size: max_buffer_size)
-        @flusher = Flusher.new(@buffer)
       end
 
       def produce(message, options = {})
-        @buffer.push(message, options)
+        buffer.push(message, { topic: topic }.compact.merge(options))
       end
 
       def deliver
-        @buffer.flush
+        buffer.flush
       end
 
       def shutdown
-        @buffer.flush
+        buffer.flush
         producer.shutdown
       end
 
       private
+
+      def configuration
+        self.class.configuration
+      end
+
+      def topic
+        self.class.configuration.topic
+      end
+
+      def buffer
+        @buffer || bootstrap
+      end
+
+      def bootstrap
+        @lock.synchronize do
+          @buffer ||= Buffer.new(producer, max_size: max_buffer_size)
+          @flusher ||= Flusher.new(@buffer)
+          @buffer
+        end
+      end
 
       def producer
         @producer || Super::Flux.producer

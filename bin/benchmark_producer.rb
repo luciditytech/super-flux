@@ -16,12 +16,12 @@ Super::Flux.configure do |config|
   config.producer_options = {
     max_buffer_size: 10_000,
     compression_codec: :lz4,
-    compression_threshold: 10,
     required_acks: 1
   }
 end
 
 class Producer < Super::Flux::Producer
+  topic 'tracks'
 end
 
 class Message
@@ -43,7 +43,7 @@ start_time = Time.now
 data.each_slice(16) do |slice|
   jobs = slice.map do |msg|
     Thread.new do
-      Producer.produce(msg, topic: 'tracks')
+      Producer.produce(msg)
     end
   end
 

@@ -31,8 +31,8 @@ module Super
                    :concurrency=,
                    :adapter,
                    :adapter=,
-                   :pool,
-                   :pool=
+                   :producer,
+                   :producer=
 
     def self.configure(&block)
       block.call(configuration)

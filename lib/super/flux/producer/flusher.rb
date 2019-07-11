@@ -11,7 +11,7 @@ module Super
         }.freeze
 
         def initialize(buffer)
-          @buffer = WeakRef.new(buffer)
+          @buffer = buffer
 
           @task = Concurrent::TimerTask.new(TASK_OPTIONS) do |_task|
             flush
