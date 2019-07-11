@@ -23,6 +23,10 @@ module Super
         self[:producer_options] || DEFAULT_PRODUCER_OPTIONS
       end
 
+      def environment
+        self[:environment] ||= ENV.fetch('RUBY_ENV', 'development')
+      end
+
       private
 
       def setup_adapter

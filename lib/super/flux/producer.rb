@@ -23,11 +23,7 @@ module Super
 
       def initialize
         @lock = Mutex.new
-        at_exit { shutdown }
-      end
-
-      def max_buffer_size
-        @max_buffer_size ||= Super::Flux.configuration.producer_options[:max_buffer_size]
+        at_exit { shutdown } unless testing?
       end
 
       def configure(&block)
@@ -54,7 +50,12 @@ module Super
       end
 
       def topic
-        self.class.configuration.topic
+        configuration.topic
+      end
+
+      def max_buffer_size
+        configuration.max_buffer_size ||=
+          Super::Flux.configuration.producer_options[:max_buffer_size]
       end
 
       def buffer
@@ -71,6 +72,10 @@ module Super
 
       def producer
         @producer || Super::Flux.producer
+      end
+
+      def testing?
+        Super::Flux.environment == 'test'
       end
     end
   end

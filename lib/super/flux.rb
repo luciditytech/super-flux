@@ -16,9 +16,6 @@ require_relative 'flux/consumer_factory'
 require_relative 'flux/configuration'
 require_relative 'flux/task'
 require_relative 'flux/reactor'
-require_relative 'flux/governor'
-require_relative 'flux/execute_task'
-require_relative 'flux/retry_task'
 require_relative 'flux/producer'
 
 module Super
@@ -32,7 +29,8 @@ module Super
                    :adapter,
                    :adapter=,
                    :producer,
-                   :producer=
+                   :producer=,
+                   :environment
 
     def self.configure(&block)
       block.call(configuration)

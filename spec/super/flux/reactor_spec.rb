@@ -23,12 +23,12 @@ RSpec.describe Super::Flux::Reactor do
       end
 
       it 'throttles the message' do
-        expect(Super::Flux::Governor).to receive(:call).with(message, 0)
+        expect(Super::Flux::Reactor::Governor).to receive(:call).with(message, 0)
         subject
       end
 
       it 'executes the task' do
-        expect(Super::Flux::ExecuteTask).to receive(:call)
+        expect(Super::Flux::Reactor::ExecuteTask).to receive(:call)
           .with(task, message)
 
         subject
@@ -45,18 +45,18 @@ RSpec.describe Super::Flux::Reactor do
         topics[stage]
       end
 
-      allow(Super::Flux::Governor).to receive(:call)
+      allow(Super::Flux::Reactor::Governor).to receive(:call)
     end
 
     context 'when the task execution is successful' do
       before do
-        allow(Super::Flux::ExecuteTask).to receive(:call).and_return(true)
+        allow(Super::Flux::Reactor::ExecuteTask).to receive(:call).and_return(true)
       end
 
       it_behaves_like 'a reactor loop'
 
       it 'does not attempt a retry' do
-        expect(Super::Flux::RetryTask).to_not receive(:call)
+        expect(Super::Flux::Reactor::RetryTask).to_not receive(:call)
 
         subject
       end
@@ -64,14 +64,14 @@ RSpec.describe Super::Flux::Reactor do
 
     context 'when the task execution fails' do
       before do
-        allow(Super::Flux::ExecuteTask).to receive(:call).and_return(false)
-        allow(Super::Flux::RetryTask).to receive(:call).and_return(true)
+        allow(Super::Flux::Reactor::ExecuteTask).to receive(:call).and_return(false)
+        allow(Super::Flux::Reactor::RetryTask).to receive(:call).and_return(true)
       end
 
       it_behaves_like 'a reactor loop'
 
       it 'attempts a retry' do
-        expect(Super::Flux::RetryTask).to receive(:call)
+        expect(Super::Flux::Reactor::RetryTask).to receive(:call)
           .with(message, topics[1])
 
         subject

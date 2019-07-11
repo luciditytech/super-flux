@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 require_relative 'reactor/topic_factory'
+require_relative 'reactor/execute_task'
+require_relative 'reactor/retry_task'
+require_relative 'reactor/governor'
 
 module Super
   module Flux
