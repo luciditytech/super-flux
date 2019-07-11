@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Super
   module Flux
     class Producer
@@ -11,7 +13,7 @@ module Super
         def initialize(buffer)
           @buffer = WeakRef.new(buffer)
 
-          @task = Concurrent::TimerTask.new(TASK_OPTIONS) do |task|
+          @task = Concurrent::TimerTask.new(TASK_OPTIONS) do |_task|
             flush
           end
         end

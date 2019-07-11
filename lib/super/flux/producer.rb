@@ -8,16 +8,20 @@ module Super
     class Producer
       include Super::Component
 
-      inst_writer :producer
+      inst_writer :producer, :max_buffer_size
       interface :configure, :boot, :produce, :deliver, :shutdown
 
       def initialize
         at_exit { shutdown }
       end
 
+      def max_buffer_size
+        @max_buffer_size ||= Super::Flux.configuration.producer_options[:max_buffer_size]
+      end
+
       def configure(&block)
         block.call(self)
-        @buffer = Buffer.new(producer, max_size: 10000)
+        @buffer = Buffer.new(producer, max_buffer_size: max_buffer_size)
         @flusher = Flusher.new(@buffer)
       end
 
@@ -26,11 +30,11 @@ module Super
       end
 
       def deliver
-        @buffer.flush_all
+        @buffer.flush
       end
 
       def shutdown
-        @buffer.flush_all
+        @buffer.flush
         producer.shutdown
       end
 

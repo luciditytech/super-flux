@@ -3,7 +3,6 @@
 module Super
   module Flux
     class Configuration < OpenStruct
-
       DEFAULT_PRODUCER_OPTIONS = {
         max_buffer_size: 1000
       }.freeze
@@ -14,10 +13,6 @@ module Super
 
       def adapter
         self[:adapter] || setup_adapter
-      end
-
-      def pool
-        self[:pool] || setup_pool
       end
 
       def producer
@@ -41,14 +36,6 @@ module Super
         return unless adapter
 
         self.producer = adapter.producer(producer_options || {})
-      end
-
-      def setup_pool
-        return unless adapter
-
-        self.pool = Super::ResourcePool.new(size: concurrency || 1) do
-          adapter.producer(producer_options || {})
-        end
       end
     end
   end
