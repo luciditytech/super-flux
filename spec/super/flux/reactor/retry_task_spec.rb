@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe Super::Flux::RetryTask do
+RSpec.describe Super::Flux::Reactor::RetryTask do
   describe '.call' do
     subject { described_class.call(message, next_topic) }
     let(:adapter) { double }

@@ -7,6 +7,7 @@ Bundler.require(:development)
 
 Super::Flux.configure do |config|
   config.logger = Logger.new('/dev/null')
+  config.environment = 'test'
 end
 
 RSpec.configure do |config|

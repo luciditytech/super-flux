@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe Super::Flux::ExecuteTask do
+RSpec.describe Super::Flux::Reactor::ExecuteTask do
   describe '.call' do
     subject { described_class.call(task, message) }
 

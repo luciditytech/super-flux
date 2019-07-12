@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe Super::Flux::Governor do
+RSpec.describe Super::Flux::Reactor::Governor do
   describe '.call' do
     subject { described_class.call(message, stage) }
 
