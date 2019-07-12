@@ -2,7 +2,7 @@
 
 module Super
   module Flux
-    class Producer
+    module Producer
       class Buffer
         def initialize(producer, max_size: 1)
           @producer = producer

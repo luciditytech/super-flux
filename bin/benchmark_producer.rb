@@ -20,7 +20,9 @@ Super::Flux.configure do |config|
   }
 end
 
-class Producer < Super::Flux::Producer
+class Producer
+  include Super::Flux::Producer
+
   topic 'tracks'
 end
 
