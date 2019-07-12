@@ -3,7 +3,9 @@
 require 'spec_helper'
 
 RSpec.describe Super::Flux::Producer do
-  class TestProducer < Super::Flux::Producer
+  class TestProducer
+    include Super::Flux::Producer
+
     topic 'test'
     max_buffer_size 1000
   end

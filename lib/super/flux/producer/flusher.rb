@@ -2,7 +2,7 @@
 
 module Super
   module Flux
-    class Producer
+    module Producer
       class Flusher
         TASK_OPTIONS = {
           execution_interval: 1,
