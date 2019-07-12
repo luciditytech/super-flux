@@ -83,5 +83,5 @@ Super::Flux.run(task)
 ```
 
 ```
-$ bundle exec bin/flux AwesomeTask
+$ bundle exec flux process --load ./config/boot.rb AwesomeTask
 ```

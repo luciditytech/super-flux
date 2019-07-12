@@ -5,6 +5,7 @@ PATH
       concurrent-ruby
       ruby-kafka
       super
+      thor
 
 GEM
   remote: https://rubygems.org/
@@ -96,6 +97,7 @@ GEM
       concurrent-ruby
       config
       zeitwerk
+    thor (0.20.3)
     thread_safe (0.3.6)
     tzinfo (1.2.5)
       thread_safe (~> 0.1)
