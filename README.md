@@ -1,39 +1,87 @@
 # Super::Flux
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/super/flux`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+`Super::Flux` is a high performance framework for creating producers and consumers using Kafka. It's intended to be used with the `Super` toolchain but it can be used separately in any application.
 
 ## Installation
 
-Add this line to your application's Gemfile:
-
 ```ruby
+# Gemfile
 gem 'super-flux'
 ```
 
-And then execute:
+If you want to add compression (ex: lz4), make sure to add any dependencies to your Gemfile. Example:
 
-    $ bundle
+```ruby
+gem 'extlz4'
+```
 
-Or install it yourself as:
+## Setup
 
-    $ gem install super-flux
+`Super::Flux` allows you to set global Kafka adapter and producer options so that you don't have to manually set up everything. If you need to use custom adapters (ex: if you using multiple Kafka clusters), you may do so by injecting those directly into the classes you wish to customize.
+
+```ruby
+# config/initializers/super-flux.rb
+
+Super::Flux.configure do |config|
+  config.kafka = {
+    brokers: Settings.kafka.brokers,
+    client_id: Settings.kafka.client_id
+  }
+
+  config.producer_options = {
+    max_buffer_size: Settings.kafka.max_buffer_size,
+    compression_codec: Settings.kafka.compression_codec,
+    required_acks: Settings.kafka.required_acks
+  }.compact
+end
+```
 
 ## Usage
 
-TODO: Write usage instructions here
+### Producers
 
-## Development
+`Super::Flux` provides an easy to use and extensive framework for creating topic-specific producers. These auto-boot when first used in a thread safe way and automatically flush pending messages both regularly and if the internal buffer overloads.
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+```ruby
+class AwesomeProducer
+  include Super::Flux::Producer
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+  topic 'awesome'
+end
 
-## Contributing
+AwesomeProducer.produce('MESSAGE', partition_key: 'KEY')
+```
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/super-flux.
+### Consumers
+`Super::Flux` provides an easy way to define tasks that process Kafka messages. Furthermore, retries are automatically processed using multiple retry topics. Reference: [Building Reliable Reprocessing and Dead Letter Queues with Apache Kafka](https://eng.uber.com/reliable-reprocessing/).
 
-## License
+```ruby
+# app/kafka/awesome_task.rb
 
-The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
+class AwesomeTask
+  include Super::Flux::Task
+
+  topic 'awesome' # input topic
+  group_id 'magnificent-5' # Consumer Group
+  retries 5 # maximum number of retries
+
+  def call(message)
+    Super::Flux.logger.info(message)
+  end
+end
+```
+
+Tasks are processed by instantiating reactors:
+
+```ruby
+#!/usr/bin/env ruby
+
+require_relative '../config/boot'
+
+task = Kernel.const_get(ARGV[0])
+Super::Flux.run(task)
+```
+
+```
+$ bundle exec bin/flux AwesomeTask
+```
