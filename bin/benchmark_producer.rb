@@ -9,7 +9,7 @@ require_relative '../lib/super/flux'
 
 Super::Flux.configure do |config|
   config.kafka = {
-    brokers: %w[localhost:9092],
+    brokers: ENV.fetch('KAFKA_BROKERS', 'localhost:9092').split(','),
     client_id: 'flux'
   }
 
