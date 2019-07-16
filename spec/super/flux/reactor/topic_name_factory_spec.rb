@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe Super::Flux::Reactor::TopicFactory do
+RSpec.describe Super::Flux::Reactor::TopicNameFactory do
   describe '.call' do
     subject { described_class.call(settings, stage) }
     let(:settings) { double(topic: 'TOPIC', retries: 2, group_id: 'GROUP') }

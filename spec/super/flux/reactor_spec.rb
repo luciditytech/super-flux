@@ -41,7 +41,7 @@ RSpec.describe Super::Flux::Reactor do
       allow(consumer).to receive(:subscribe)
       allow(consumer).to receive(:each_message).and_yield(message)
 
-      allow(Super::Flux::Reactor::TopicFactory).to receive(:call) do |_, stage|
+      allow(Super::Flux::Reactor::TopicNameFactory).to receive(:call) do |_, stage|
         topics[stage]
       end
 
