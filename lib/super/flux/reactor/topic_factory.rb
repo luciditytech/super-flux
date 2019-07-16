@@ -5,14 +5,27 @@ module Super
     class Reactor
       class TopicFactory
         include Super::Service
+        extend Forwardable
 
         def call(settings, stage)
-          base_name = settings.topic
-          max_try = settings.retries
-          return base_name if stage.zero?
-          return base_name + "-try-#{stage}" if stage <= max_try
+          @settings = settings
+          @stage = stage
+          return topic if @stage.zero?
+          return stage_topic if @stage <= retries
 
-          base_name + '-dlq'
+          dead_letter_topic
+        end
+
+        private
+
+        def_delegators :@settings, :topic, :retries, :group_id
+
+        def stage_topic
+          [topic, group_id, 'try', @stage].compact.join('-')
+        end
+
+        def dead_letter_topic
+          [topic, group_id, 'dlq'].compact.join('-')
         end
       end
     end
