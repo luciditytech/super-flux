@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'reactor/topic_factory'
+require_relative 'reactor/topic_name_factory'
 require_relative 'reactor/execute_task'
 require_relative 'reactor/retry_task'
 require_relative 'reactor/governor'
@@ -42,7 +42,7 @@ module Super
         @topics = []
 
         0.upto(@task.settings.retries + 1) do |stage|
-          @topics << TopicFactory.call(@task.settings, stage)
+          @topics << TopicNameFactory.call(@task.settings, stage)
         end
       end
 
