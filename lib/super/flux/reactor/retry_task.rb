@@ -14,7 +14,8 @@ module Super
           consumer.mark_message_as_processed(message)
           true
         rescue StandardError => e
-          logger.error(e.message)
+          message = [e.message, *e.backtrace].join('\n')
+          logger.error(message)
           false
         end
       end
