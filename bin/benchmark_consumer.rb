@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative '../lib/super/flux'
 
 Super::Flux.configure do |config|
@@ -22,7 +23,7 @@ class TestTask
   group_id 'test'
   retries 2
 
-  def call(data)
+  def call(_data)
     raise
   end
 end

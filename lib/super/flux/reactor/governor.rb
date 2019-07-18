@@ -24,12 +24,11 @@ module Super
         def_delegators :@message, :topic, :partition, :offset
 
         def lead_time
-          # @lead_time ||= @stage**4 + 15 + (rand(30) * (@stage + 1))
-          @lead_time ||= 5
+          @lead_time ||= @stage**4 + 15 + (rand(30) * (@stage + 1))
         end
 
-        def wait_time
-          @wait_time ||= (lead_time - elapsed_time).to_i
+        def timeout
+          @timeout ||= (lead_time - elapsed_time).to_i
         end
 
         def elapsed_time
@@ -37,7 +36,7 @@ module Super
         end
 
         def early?
-          wait_time > 0
+          timeout.positive?
         end
 
         def paused?
@@ -45,7 +44,7 @@ module Super
         end
 
         def pause_and_rewind
-          logger.info("Early message #{topic} / #{partition} - waiting #{wait_time} seconds")
+          logger.debug("Message Early - #{topic} / #{partition} / #{timeout} seconds - waiting...")
           consumer.seek(topic, partition, offset)
           consumer.pause(topic, partition, timeout: 1)
           true
