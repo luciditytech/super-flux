@@ -4,41 +4,51 @@ module Super
   module Flux
     class Reactor
       class Governor
+        extend Forwardable
         include Super::Service
         include LoggerResolver
         include ConsumerResolver
 
         def call(message, stage)
-          return if stage.zero?
-
           @message = message
           @stage = stage
-          return unless early?
+          return false if @stage.zero?
+          return true if paused?
+          return false unless early?
 
-          wait
+          pause_and_rewind
         end
 
         private
 
-        def now
-          Time.now.utc
-        end
+        def_delegators :@message, :topic, :partition, :offset
 
         def lead_time
-          @lead_time ||= @stage**4 + 15 + (rand(30) * (@stage + 1))
+          # @lead_time ||= @stage**4 + 15 + (rand(30) * (@stage + 1))
+          @lead_time ||= 5
         end
 
         def wait_time
-          @wait_time ||= (lead_time - (now - @message.create_time)).to_i
+          @wait_time ||= (lead_time - elapsed_time).to_i
+        end
+
+        def elapsed_time
+          @elapsed_time ||= (Time.now.utc - @message.create_time).to_i
         end
 
         def early?
-          now - @message.create_time < lead_time
+          wait_time > 0
         end
 
-        def wait
-          logger.info("Early message - waiting #{wait_time} seconds")
-          consumer.pause(@message.topic, @message.partition, timeout: wait_time)
+        def paused?
+          consumer.paused?(topic, partition)
+        end
+
+        def pause_and_rewind
+          logger.info("Early message #{topic} / #{partition} - waiting #{wait_time} seconds")
+          consumer.seek(topic, partition, offset)
+          consumer.pause(topic, partition, timeout: 1)
+          true
         end
       end
     end

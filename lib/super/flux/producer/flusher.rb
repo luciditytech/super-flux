@@ -6,7 +6,6 @@ module Super
       class Flusher
         TASK_OPTIONS = {
           execution_interval: 1,
-          run_now: true,
           timeout_interval: 1
         }.freeze
 
@@ -18,12 +17,16 @@ module Super
           end
         end
 
-        def flush
-          @buffer.flush
+        def start
+          @task.execute
         end
 
         def stop
-          @task.stop
+          @task.shutdown
+        end
+
+        def flush
+          @buffer.flush
         end
       end
     end

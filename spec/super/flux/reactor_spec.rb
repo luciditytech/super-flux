@@ -45,7 +45,7 @@ RSpec.describe Super::Flux::Reactor do
         topics[stage]
       end
 
-      allow(Super::Flux::Reactor::Governor).to receive(:call)
+      allow(Super::Flux::Reactor::Governor).to receive(:call).and_return(false)
     end
 
     context 'when the task execution is successful' do

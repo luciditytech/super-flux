@@ -33,7 +33,7 @@ class Message
   attribute :payload
 end
 
-data = Array.new(100_000) do
+data = Array.new(1000) do
   m = Message.new(id: SecureRandom.uuid, payload: SecureRandom.hex(256))
   JSON.dump(m.attributes)
 end

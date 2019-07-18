@@ -44,7 +44,8 @@ module Super
         end
 
         def shutdown
-          buffer.flush
+          @buffer.flush
+          @flusher.stop
           producer.shutdown
         end
 
@@ -71,6 +72,7 @@ module Super
           @lock.synchronize do
             @buffer ||= Buffer.new(producer, max_size: max_buffer_size)
             @flusher ||= Flusher.new(@buffer)
+            @flusher.start
             @buffer
           end
         end

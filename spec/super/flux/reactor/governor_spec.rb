@@ -17,7 +17,7 @@ RSpec.describe Super::Flux::Reactor::Governor do
     context 'when stage is 0' do
       let(:stage) { 0 }
 
-      it { is_expected.to be_nil }
+      it { is_expected.to eq(false) }
     end
 
     context 'when stage is not 0' do
@@ -28,7 +28,7 @@ RSpec.describe Super::Flux::Reactor::Governor do
           allow(message).to receive(:create_time).and_return(Time.now.utc - 7200)
         end
 
-        it { is_expected.to be_nil }
+        it { is_expected.to eq(false) }
       end
 
       context 'and the message is early' do
@@ -38,6 +38,8 @@ RSpec.describe Super::Flux::Reactor::Governor do
           allow(message).to receive(:partition).and_return(1)
           allow(consumer).to receive(:pause)
         end
+
+        it { is_expected.to eq(true) }
 
         it 'pauses the partition consumption' do
           expect(consumer).to receive(:pause)

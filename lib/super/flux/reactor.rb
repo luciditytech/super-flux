@@ -9,6 +9,7 @@ module Super
   module Flux
     class Reactor
       include ConsumerResolver
+      include LoggerResolver
 
       CONSUMPTION_OPTIONS = {
         automatically_mark_as_processed: false
@@ -21,6 +22,7 @@ module Super
       def initialize(task)
         @task = task
         @state = :offline
+
         Signal.trap('INT') { stop }
         setup_topics
       end
@@ -28,12 +30,14 @@ module Super
       def start
         @state = :online
         @topics[0..-2].each { |topic| consumer.subscribe(topic) }
-        consumer.each_message(CONSUMPTION_OPTIONS) { |message| process(message) }
+        # consumer.each_message(**CONSUMPTION_OPTIONS) { |message| process(message) }
+        # consumer.each_batch(**CONSUMPTION_OPTIONS) { |batch| process(batch) }
+        consumer.each_batch(automatically_mark_as_processed: false) { |batch| process(batch) }
       end
 
       def stop
-        consumer.stop
         @state = :offline
+        consumer.stop
       end
 
       private
@@ -46,10 +50,19 @@ module Super
         end
       end
 
-      def process(message)
-        throttle(message)
-        execute(message) || schedule_retry(message)
+      def process(batch)
+        batch.messages.each do |message|
+          break if throttle(message)
+          execute(message) || schedule_retry(message)
+        end
       end
+
+      # def process(message)
+      #   return if throttle(message)
+      #   return if execute(message)
+      #
+      #   schedule_retry(message)
+      # end
 
       def throttle(message)
         Governor.call(message, stage_for(message.topic))
