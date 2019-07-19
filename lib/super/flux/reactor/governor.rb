@@ -6,22 +6,16 @@ module Super
       class Governor
         extend Forwardable
         include Super::Service
-        include LoggerResolver
-        include ConsumerResolver
 
         def call(message, stage)
           @message = message
           @stage = stage
           return false if @stage.zero?
-          return true if paused?
-          return false unless early?
 
-          pause_and_rewind
+          early?
         end
 
         private
-
-        def_delegators :@message, :topic, :partition, :offset
 
         def lead_time
           @lead_time ||= @stage**4 + 15 + (rand(30) * (@stage + 1))
@@ -37,17 +31,6 @@ module Super
 
         def early?
           timeout.positive?
-        end
-
-        def paused?
-          consumer.paused?(topic, partition)
-        end
-
-        def pause_and_rewind
-          logger.debug("Message Early - #{topic} / #{partition} / #{timeout} seconds - waiting...")
-          consumer.seek(topic, partition, offset)
-          consumer.pause(topic, partition, timeout: 1)
-          true
         end
       end
     end

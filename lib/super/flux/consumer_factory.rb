@@ -4,9 +4,8 @@ module Super
   module Flux
     class ConsumerFactory
       include Super::Service
-      include AdapterResolver
 
-      def call(settings)
+      def call(settings, adapter: Super::Flux.adapter)
         @settings = settings
         adapter.consumer(consumer_options)
       end
