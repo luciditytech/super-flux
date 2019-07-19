@@ -45,6 +45,7 @@ module Super
 
         def shutdown
           buffer.flush
+          flusher.stop
           producer.shutdown
         end
 
