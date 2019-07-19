@@ -16,6 +16,7 @@ module Super
           @task = Concurrent::TimerTask.new(TASK_OPTIONS) do |_task|
             flush
           end
+          @task.execute
         end
 
         def flush
