@@ -82,6 +82,14 @@ task = Kernel.const_get(ARGV[0])
 Super::Flux.run(task)
 ```
 
+Example usage for a simple task with 5 retries (6 stages including the Dead Letter Queue):
+
+Running the main stage:
 ```
-$ bundle exec flux process --load ./config/boot.rb AwesomeTask
+$ bundle exec flux process --load ./config/boot.rb --stages 0 AwesomeTask
+```
+
+Running retry stages:
+```
+$ bundle exec flux process --load ./config/boot.rb --stages 1-6 AwesomeTask
 ```

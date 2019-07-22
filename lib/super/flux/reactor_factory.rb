@@ -1,38 +1,43 @@
+# frozen_string_literal: true
+
 module Super
   module Flux
     class ReactorFactory
+      extend Forwardable
       include Super::Service
 
       def call(params = {})
         @params = params
         setup_topic_manager
         setup_consumer
-        setup_batch_manager
+        setup_processor
 
         Reactor.new(**reactor_params)
       end
 
       private
 
+      def_delegators :task, :settings
+
       def task
         @params[:task]
       end
 
       def setup_topic_manager
-        @topic_manager = Reactor::TopicManager.new(task.settings, stages: @params[:stages])
+        @topic_manager = Reactor::TopicManager.new(settings, stages: @params[:stages])
       end
 
       def setup_consumer
-        @consumer = ConsumerFactory.call(task.settings, adapter: @params[:adapter])
+        @consumer = ConsumerFactory.call(settings, adapter: @params[:adapter])
       end
 
-      def setup_batch_manager
-        @batch_manager =  Reactor::BatchManager.new(
+      def setup_processor
+        @processor = Reactor::Processor.new(
           task: task,
           topic_manager: @topic_manager,
           adapter: @params[:adapter],
           consumer: @consumer,
-          logger: @params[:logger],
+          logger: @params[:logger]
         )
       end
 
@@ -40,7 +45,7 @@ module Super
         {
           topic_manager: @topic_manager,
           consumer: @consumer,
-          batch_manager: @batch_manager,
+          processor: @processor,
           logger: @params[:logger]
         }.compact
       end

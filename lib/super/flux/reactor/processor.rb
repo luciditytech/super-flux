@@ -1,7 +1,9 @@
+# frozen_string_literal: true
+
 module Super
   module Flux
     class Reactor
-      class BatchManager
+      class Processor
         extend Forwardable
         include Super::Struct
 
@@ -46,6 +48,7 @@ module Super
 
         def checkpoint(message)
           return unless message
+
           consumer.mark_message_as_processed(message)
         end
       end

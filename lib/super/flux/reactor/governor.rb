@@ -4,7 +4,6 @@ module Super
   module Flux
     class Reactor
       class Governor
-        extend Forwardable
         include Super::Service
 
         def call(message, stage)

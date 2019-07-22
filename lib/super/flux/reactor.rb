@@ -3,7 +3,7 @@
 require_relative 'reactor/topic_name_factory'
 require_relative 'reactor/governor'
 require_relative 'reactor/topic_manager'
-require_relative 'reactor/batch_manager'
+require_relative 'reactor/processor'
 
 module Super
   module Flux
@@ -16,11 +16,11 @@ module Super
 
       ThrottleError = Class.new(StandardError)
 
-      def initialize(topic_manager:, consumer:, batch_manager:, logger:)
+      def initialize(topic_manager:, consumer:, processor:, logger:)
         @topic_manager = topic_manager
         @consumer = consumer
         @logger = logger
-        @batch_manager = batch_manager
+        @processor = processor
         @state = :offline
 
         Signal.trap('INT') { stop }
@@ -30,18 +30,7 @@ module Super
         @logger.info('Starting Reactor...')
         @state = :online
         topics[0..-2].each { |topic| @consumer.subscribe(topic) }
-
-        loop do
-          begin
-            @consumer.each_message(**CONSUMPTION_OPTIONS) { |message| process(message) }
-            break if @state != :online
-          rescue Kafka::ProcessingError => e
-            @logger.info("Throttled, waiting #{e.topic} #{e.partition} #{e.offset}")
-            @consumer.pause(e.topic, e.partition, timeout: 30)
-            @consumer.seek(e.topic, e.partition, e.offset)
-            retry
-          end
-        end
+        run while @state == :online
       end
 
       def stop
@@ -52,7 +41,22 @@ module Super
       private
 
       def_delegators :@topic_manager, :topics
-      def_delegator :@batch_manager, :call, :process
+      def_delegator :@processor, :call, :process
+
+      def run
+        return if @state != :online
+
+        @consumer.each_message(**CONSUMPTION_OPTIONS) { |message| process(message) }
+      rescue Kafka::ProcessingError => e
+        @logger.info("Throttled - #{e.topic} #{e.partition} #{e.offset}")
+        reset_consumer(e)
+        retry
+      end
+
+      def reset_consumer(error)
+        @consumer.pause(error.topic, error.partition, timeout: 30)
+        @consumer.seek(error.topic, error.partition, error.offset)
+      end
     end
   end
 end
