@@ -44,8 +44,8 @@ module Super
         end
 
         def shutdown
-          @buffer.flush
-          @flusher.stop
+          @buffer&.flush
+          @flusher&.stop
           producer.shutdown
         end
 
