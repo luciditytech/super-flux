@@ -24,6 +24,7 @@ module Super
         @state = :offline
 
         Signal.trap('INT') { stop }
+        Signal.trap('TERM') { stop }
       end
 
       def start
