@@ -93,3 +93,10 @@ Running retry stages:
 ```
 $ bundle exec flux process --load ./config/boot.rb --stages 1-6 AwesomeTask
 ```
+
+Running all stages:
+```
+$ bundle exec flux process --load ./config/boot.rb AwesomeTask
+```
+
+NOTE: For high throughput applications you should consider running the main stage and the retry stages separately. The main stage is not throttled so this allows for maximum consumption speed.
