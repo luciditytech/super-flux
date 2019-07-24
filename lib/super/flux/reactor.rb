@@ -9,6 +9,14 @@ module Super
   module Flux
     class Reactor
       extend Forwardable
+      include Super::Struct
+
+      attribute :topic_manager
+      attribute :consumer
+      attribute :processor
+      attribute :logger
+      attribute :options
+      attribute :state
 
       CONSUMPTION_OPTIONS = {
         automatically_mark_as_processed: false
@@ -16,47 +24,56 @@ module Super
 
       ThrottleError = Class.new(StandardError)
 
-      def initialize(topic_manager:, consumer:, processor:, logger:)
-        @topic_manager = topic_manager
-        @consumer = consumer
-        @logger = logger
-        @processor = processor
-        @state = :offline
+      def initialize(**args)
+        super(args)
+        self.state ||= :offline
+        self.options ||= {}
+        @loops = 0
 
         Signal.trap('INT') { stop }
         Signal.trap('TERM') { stop }
       end
 
       def start
-        @logger.info('Starting Reactor...')
-        @state = :online
-        topics[0..-2].each { |topic| @consumer.subscribe(topic) }
-        run while @state == :online
+        logger.info('Starting Reactor...')
+        self.state = :online
+        topics[0..-2].each { |topic| subscribe(topic) }
+        run while alive?
       end
 
       def stop
-        @state = :offline
-        @consumer.stop
+        self.state = :offline
+        consumer.stop
       end
 
       private
 
-      def_delegators :@topic_manager, :topics
-      def_delegator :@processor, :call, :process
+      def_delegators :topic_manager, :topics
+      def_delegator :processor, :call, :process
+      def_delegators :consumer, :subscribe, :each_message, :pause, :seek
+
+      def alive?
+        return false if options[:run_once] && @loops.positive?
+
+        state == :online
+      end
 
       def run
-        return if @state != :online
+        return unless alive?
 
-        @consumer.each_message(**CONSUMPTION_OPTIONS) { |message| process(message) }
+        @loops += 1
+        each_message(**CONSUMPTION_OPTIONS) { |message| raise unless process(message) }
       rescue Kafka::ProcessingError => e
-        @logger.info("Throttled - #{e.topic} #{e.partition} #{e.offset}")
-        reset_consumer(e)
+        reset_consumer(e.topic, e.partition, e.offset)
+        return stop unless alive?
+
         retry
       end
 
-      def reset_consumer(error)
-        @consumer.pause(error.topic, error.partition, timeout: 30)
-        @consumer.seek(error.topic, error.partition, error.offset)
+      def reset_consumer(topic, partition, offset)
+        logger.info("Throttled - #{topic} #{partition} #{offset}")
+        pause(topic, partition, timeout: 30)
+        seek(topic, partition, offset)
       end
     end
   end

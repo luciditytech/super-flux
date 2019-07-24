@@ -24,6 +24,7 @@ RSpec.describe Super::Flux::Producer do
       allow(Super::Flux).to receive(:producer).and_return(producer)
       allow(Super::Flux::Producer::Buffer).to receive(:new).and_return(buffer)
       allow(Super::Flux::Producer::Flusher).to receive(:new).and_return(flusher)
+      allow(flusher).to receive(:start)
       allow(buffer).to receive(:push)
     end
 
@@ -43,6 +44,11 @@ RSpec.describe Super::Flux::Producer do
       expect(Super::Flux::Producer::Flusher).to receive(:new)
         .with(buffer)
 
+      subject
+    end
+
+    it 'starts the flusher' do
+      expect(flusher).to receive(:start)
       subject
     end
   end

@@ -16,16 +16,20 @@ module Super
 
         private
 
+        # The minimum amount of time retries at this stage should wait.
         def lead_time
           @lead_time ||= @stage**4 + 15 + (rand(30) * (@stage + 1))
         end
 
-        def timeout
-          @timeout ||= (lead_time - elapsed_time).to_i
-        end
-
+        # Time that has already passed since the message was first created.
         def elapsed_time
           @elapsed_time ||= (Time.now.utc - @message.create_time).to_i
+        end
+
+        # The minimum remaining time the consumer should wait before processing
+        # more messages from this topic and partition.
+        def timeout
+          @timeout ||= (lead_time - elapsed_time).to_i
         end
 
         def early?
