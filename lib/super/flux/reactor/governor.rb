@@ -5,40 +5,35 @@ module Super
     class Reactor
       class Governor
         include Super::Service
-        include LoggerResolver
-        include ConsumerResolver
 
         def call(message, stage)
-          return if stage.zero?
-
           @message = message
           @stage = stage
-          return unless early?
+          return false if @stage.zero?
 
-          wait
+          early?
         end
 
         private
 
-        def now
-          Time.now.utc
-        end
-
+        # The minimum amount of time retries at this stage should wait.
         def lead_time
           @lead_time ||= @stage**4 + 15 + (rand(30) * (@stage + 1))
         end
 
-        def wait_time
-          @wait_time ||= (lead_time - (now - @message.create_time)).to_i
+        # Time that has already passed since the message was first created.
+        def elapsed_time
+          @elapsed_time ||= (Time.now.utc - @message.create_time).to_i
+        end
+
+        # The minimum remaining time the consumer should wait before processing
+        # more messages from this topic and partition.
+        def timeout
+          @timeout ||= (lead_time - elapsed_time).to_i
         end
 
         def early?
-          now - @message.create_time < lead_time
-        end
-
-        def wait
-          logger.info("Early message - waiting #{wait_time} seconds")
-          consumer.pause(@message.topic, @message.partition, timeout: wait_time)
+          timeout.positive?
         end
       end
     end

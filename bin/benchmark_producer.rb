@@ -33,7 +33,9 @@ class Message
   attribute :payload
 end
 
-data = Array.new(100_000) do
+count = ARGV[0]&.to_i || 1_000
+
+data = Array.new(count) do
   m = Message.new(id: SecureRandom.uuid, payload: SecureRandom.hex(256))
   JSON.dump(m.attributes)
 end
@@ -55,4 +57,4 @@ end
 Producer.deliver
 end_time = Time.now
 
-logger.info("TPS: #{100_000.fdiv(end_time - start_time).round(1)}")
+logger.info("TPS: #{count.fdiv(end_time - start_time).round(1)}")

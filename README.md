@@ -82,6 +82,52 @@ task = Kernel.const_get(ARGV[0])
 Super::Flux.run(task)
 ```
 
+Example usage for a simple task with 5 retries (6 stages including the Dead Letter Queue):
+
+Running the main stage:
+```
+$ bundle exec flux process --load ./config/boot.rb --stages 0 AwesomeTask
+```
+
+Running retry stages:
+```
+$ bundle exec flux process --load ./config/boot.rb --stages 1-6 AwesomeTask
+```
+
+Running all stages:
 ```
 $ bundle exec flux process --load ./config/boot.rb AwesomeTask
+```
+
+NOTE: For high throughput applications you should consider running the main stage and the retry stages separately. The main stage is not throttled so this allows for maximum consumption speed.
+
+#### Retries
+By default an exponential backoff strategy will be used to throttle retries. The approximate wait times are:
+
+```
+Stage #1: ~45 seconds wait time
+Stage #2: ~1.2 minutes wait time, ~2.0 minutes total wait time
+Stage #3: ~2.6 minutes wait time, ~4.5 minutes total wait time
+Stage #4: ~5.7 minutes wait time, ~10.2 minutes total wait time
+Stage #5: ~12.1 minutes wait time, ~22.4 minutes total wait time
+Stage #6: ~23.5 minutes wait time, ~45.9 minutes total wait time
+Stage #7: ~42.2 minutes wait time, ~1.5 hours total wait time
+Stage #8: ~1.2 hours wait time, ~2.6 hours total wait time
+Stage #9: ~1.9 hours wait time, ~4.5 hours total wait time
+Stage #10: ~2.8 hours wait time, ~7.3 hours total wait time
+Stage #11: ~4.1 hours wait time, ~11.5 hours total wait time
+Stage #12: ~5.8 hours wait time, ~17.3 hours total wait time
+Stage #13: ~8.0 hours wait time, ~1.1 days total wait time
+Stage #14: ~10.7 hours wait time, ~1.5 days total wait time
+Stage #15: ~14.1 hours wait time, ~2.1 days total wait time
+Stage #16: ~18.3 hours wait time, ~2.9 days total wait time
+Stage #17: ~23.3 hours wait time, ~3.8 days total wait time
+Stage #18: ~1.2 days wait time, ~5.0 days total wait time
+Stage #19: ~1.5 days wait time, ~6.6 days total wait time
+Stage #20: ~1.9 days wait time, ~8.4 days total wait time
+Stage #21: ~2.3 days wait time, ~10.7 days total wait time
+Stage #22: ~2.7 days wait time, ~13.4 days total wait time
+Stage #23: ~3.2 days wait time, ~16.6 days total wait time
+Stage #24: ~3.8 days wait time, ~20.5 days total wait time
+Stage #25: ~4.5 days wait time, ~25.0 days total wait time
 ```
