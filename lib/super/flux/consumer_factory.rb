@@ -4,9 +4,8 @@ module Super
   module Flux
     class ConsumerFactory
       include Super::Service
-      include AdapterResolver
 
-      def call(settings)
+      def call(settings, adapter: Super::Flux.adapter)
         @settings = settings
         adapter.consumer(consumer_options)
       end
@@ -16,8 +15,8 @@ module Super
       def consumer_options
         {
           group_id: @settings.group_id,
-          offset_commit_interval: @settings.offset_commit_interval || 1,
-          offset_commit_threshold: @settings.offset_commit_threshold || 10
+          offset_commit_interval: @settings.offset_commit_interval || 5,
+          offset_commit_threshold: @settings.offset_commit_threshold || 10_000
         }.compact
       end
     end

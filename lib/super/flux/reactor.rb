@@ -1,74 +1,79 @@
 # frozen_string_literal: true
 
 require_relative 'reactor/topic_name_factory'
-require_relative 'reactor/execute_task'
-require_relative 'reactor/retry_task'
 require_relative 'reactor/governor'
+require_relative 'reactor/topic_manager'
+require_relative 'reactor/processor'
 
 module Super
   module Flux
     class Reactor
-      include ConsumerResolver
+      extend Forwardable
+      include Super::Struct
+
+      attribute :topic_manager
+      attribute :consumer
+      attribute :processor
+      attribute :logger
+      attribute :options
+      attribute :state
 
       CONSUMPTION_OPTIONS = {
         automatically_mark_as_processed: false
       }.freeze
 
-      def self.run(*args)
-        new(*args).start
-      end
+      ThrottleError = Class.new(StandardError)
 
-      def initialize(task)
-        @task = task
-        @state = :offline
+      def initialize(**args)
+        super(args)
+        self.state ||= :offline
+        self.options ||= {}
+        @loops = 0
+
         Signal.trap('INT') { stop }
-        setup_topics
+        Signal.trap('TERM') { stop }
       end
 
       def start
-        @state = :online
-        @topics[0..-2].each { |topic| consumer.subscribe(topic) }
-        consumer.each_message(CONSUMPTION_OPTIONS) { |message| process(message) }
+        logger.info('Starting Reactor...')
+        self.state = :online
+        topics[0..-2].each { |topic| subscribe(topic) }
+        run while alive?
       end
 
       def stop
+        self.state = :offline
         consumer.stop
-        @state = :offline
       end
 
       private
 
-      def setup_topics
-        @topics = []
+      def_delegators :topic_manager, :topics
+      def_delegator :processor, :call, :process
+      def_delegators :consumer, :subscribe, :each_message, :pause, :seek
 
-        0.upto(@task.settings.retries + 1) do |stage|
-          @topics << TopicNameFactory.call(@task.settings, stage)
-        end
+      def alive?
+        return false if options[:run_once] && @loops.positive?
+
+        state == :online
       end
 
-      def process(message)
-        throttle(message)
-        execute(message) || schedule_retry(message)
+      def run
+        return unless alive?
+
+        @loops += 1
+        each_message(**CONSUMPTION_OPTIONS) { |message| raise unless process(message) }
+      rescue Kafka::ProcessingError => e
+        reset_consumer(e.topic, e.partition, e.offset)
+        return stop unless alive?
+
+        retry
       end
 
-      def throttle(message)
-        Governor.call(message, stage_for(message.topic))
-      end
-
-      def execute(message)
-        ExecuteTask.call(@task, message)
-      end
-
-      def schedule_retry(message)
-        RetryTask.call(message, next_topic_for(message.topic))
-      end
-
-      def stage_for(topic)
-        @topics.index(topic)
-      end
-
-      def next_topic_for(topic)
-        @topics[@topics.index(topic) + 1]
+      def reset_consumer(topic, partition, offset)
+        logger.info("Throttled - #{topic} #{partition} #{offset}")
+        pause(topic, partition, timeout: 30)
+        seek(topic, partition, offset)
       end
     end
   end
