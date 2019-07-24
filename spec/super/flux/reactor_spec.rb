@@ -31,7 +31,7 @@ RSpec.describe Super::Flux::Reactor do
 
     before do
       allow(logger).to receive(:info)
-      allow(topic_manager).to receive(:topics).and_return(topics)
+      allow(topic_manager).to receive(:active_topics).and_return(topics)
 
       TOPICS.each do |topic|
         allow(consumer).to receive(:subscribe).with(topic)

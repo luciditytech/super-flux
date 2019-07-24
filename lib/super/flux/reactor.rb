@@ -37,7 +37,7 @@ module Super
       def start
         logger.info('Starting Reactor...')
         self.state = :online
-        topics[0..-2].each { |topic| subscribe(topic) }
+        active_topics.each { |topic| subscribe(topic) }
         run while alive?
       end
 
@@ -48,7 +48,7 @@ module Super
 
       private
 
-      def_delegators :topic_manager, :topics
+      def_delegators :topic_manager, :active_topics
       def_delegator :processor, :call, :process
       def_delegators :consumer, :subscribe, :each_message, :pause, :seek
 

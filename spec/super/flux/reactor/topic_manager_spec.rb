@@ -4,14 +4,14 @@ require 'spec_helper'
 
 RSpec.describe Super::Flux::Reactor::TopicManager do
   let(:instance) { described_class.new(settings) }
-  let(:settings) { double(retries: 1) }
-  let(:topics) { %w[TOPIC TOPIC-try-1 TOPIC-dlq] }
+  let(:settings) { double(retries: 2) }
 
   before do
     Super::Flux::Reactor::TopicNameFactory.tap do |klass|
       allow(klass).to receive(:call).with(settings, 0).and_return('TOPIC')
       allow(klass).to receive(:call).with(settings, 1).and_return('TOPIC-try-1')
-      allow(klass).to receive(:call).with(settings, 2).and_return('TOPIC-dlq')
+      allow(klass).to receive(:call).with(settings, 2).and_return('TOPIC-try-2')
+      allow(klass).to receive(:call).with(settings, 3).and_return('TOPIC-dlq')
     end
   end
 
@@ -33,7 +33,7 @@ RSpec.describe Super::Flux::Reactor::TopicManager do
     context 'when requesting the DLQ topic' do
       let(:topic) { 'TOPIC-dlq' }
 
-      it { is_expected.to eq(2) }
+      it { is_expected.to eq(3) }
     end
   end
 
@@ -47,7 +47,7 @@ RSpec.describe Super::Flux::Reactor::TopicManager do
     end
 
     context 'when requesting the stage after the retry topic' do
-      let(:topic) { 'TOPIC-try-1' }
+      let(:topic) { 'TOPIC-try-2' }
 
       it { is_expected.to eq('TOPIC-dlq') }
     end
@@ -56,6 +56,32 @@ RSpec.describe Super::Flux::Reactor::TopicManager do
       let(:topic) { 'TOPIC-dlq' }
 
       it { is_expected.to eq(nil) }
+    end
+  end
+
+  describe '#active_topics' do
+    subject { instance.active_topics }
+
+    context 'without passing stages range' do
+      let(:topics) { %w[TOPIC TOPIC-try-1 TOPIC-try-2] }
+
+      it { is_expected.to eq(topics) }
+    end
+
+    context 'with valid stages range' do
+      let(:instance) { described_class.new(settings, stages: 0..1) }
+      let(:topics) { %w[TOPIC TOPIC-try-1] }
+
+      it { is_expected.to eq(topics) }
+    end
+
+    context 'with invalid stages range' do
+      let(:instance) { described_class.new(settings, stages: 1..6) }
+      let(:stages) { 0..1 }
+
+      it 'raises StageRangeInvalid error' do
+        expect { subject }.to raise_error(Super::Flux::Errors::StageRangeInvalid)
+      end
     end
   end
 end
