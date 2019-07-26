@@ -4,14 +4,13 @@ module Super
   module Flux
     class Reactor
       class TopicManager
-        attr_reader :topics
-
         def initialize(settings, stages: nil)
-          @topics = []
+          default_stages = 0..settings.retries
+          @stages = stages || default_stages
+          valid = @stages.first >= default_stages.first && @stages.last <= default_stages.last
+          raise Errors::StageRangeInvalid unless valid
 
-          (stages || (0..(settings.retries + 1)).to_a).each do |stage|
-            @topics << TopicNameFactory.call(settings, stage)
-          end
+          @topics = create_topics(settings)
         end
 
         def stage_for(topic)
@@ -20,6 +19,18 @@ module Super
 
         def next_topic_for(topic)
           @topics[stage_for(topic) + 1]
+        end
+
+        def active_topics
+          @topics[@stages]
+        end
+
+        private
+
+        def create_topics(settings)
+          (0..(settings.retries + 1)).map do |stage|
+            TopicNameFactory.call(settings, stage)
+          end
         end
       end
     end
