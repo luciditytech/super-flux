@@ -29,11 +29,12 @@ module Super
         end
 
         def execute(message)
+          logger.info(message.value)
           task.call(message.value)
           checkpoint(message)
           true
         rescue StandardError => e
-          logger.error(e.message)
+          logger.error(e.full_message)
           false
         end
 
@@ -42,7 +43,7 @@ module Super
           checkpoint(message)
           true
         rescue StandardError => e
-          logger.error(e.message)
+          logger.error(e.full_message)
           false
         end
 
