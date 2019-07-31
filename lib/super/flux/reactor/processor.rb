@@ -29,7 +29,7 @@ module Super
         end
 
         def execute(message)
-          logger.info(message.value)
+          logger.debug(message.value)
           task.call(message.value)
           checkpoint(message)
           true

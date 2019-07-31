@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    super-flux (0.1.6)
+    super-flux (0.1.7)
       concurrent-ruby
       ruby-kafka
       super
