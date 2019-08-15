@@ -2,19 +2,17 @@
 
 module Super
   module Flux
-    class Reactor
+    class Worker
       class Processor
-        extend Forwardable
         include Super::Struct
 
-        attribute :task
         attribute :logger
-        attribute :consumer
+        attribute :task
         attribute :adapter
-        attribute :topic_manager
+        attribute :consumer
 
         def call(message)
-          # throttle(message)
+          throttle(message)
           return true if execute(message)
 
           prepare_retry(message)
@@ -22,16 +20,13 @@ module Super
 
         private
 
-        def_delegators :topic_manager, :stage_for, :next_topic_for
-
         def throttle(message)
           raise if Governor.call(message, stage_for(message.topic))
         end
 
         def execute(message)
-          logger.debug(message.topic)
           task.call(message.value)
-          checkpoint(message)
+          consumer.mark_message_as_processed(message)
           true
         rescue StandardError => e
           # logger.error(e.full_message)
@@ -40,17 +35,19 @@ module Super
 
         def prepare_retry(message)
           adapter.deliver_message(message.value, topic: next_topic_for(message.topic))
-          checkpoint(message)
+          consumer.mark_message_as_processed(message)
           true
         rescue StandardError => e
-          # logger.error(e.full_message)
+          logger.error(e.full_message)
           false
         end
 
-        def checkpoint(message)
-          return unless message
+        def stage_for(topic)
+          task.topics.index(topic)
+        end
 
-          consumer.mark_message_as_processed(message)
+        def next_topic_for(topic)
+          task.topics[stage_for(topic) + 1]
         end
       end
     end

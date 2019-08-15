@@ -42,9 +42,10 @@ RSpec.describe Super::Flux::Reactor::Processor do
       end
     end
 
-    context 'and the message is not throttled' do
+    context 'when the message is not throttled' do
       before do
         allow(Super::Flux::Reactor::Governor).to receive(:call).and_return(false)
+        allow(logger).to receive(:debug)
       end
 
       context 'and execution succeeds' do
@@ -61,6 +62,7 @@ RSpec.describe Super::Flux::Reactor::Processor do
 
         before do
           allow(task).to receive(:call).with(message.value).and_raise(error)
+          allow(error).to receive(:full_message).and_return('FULL_MESSAGE')
           allow(logger).to receive(:error)
         end
 
@@ -83,7 +85,7 @@ RSpec.describe Super::Flux::Reactor::Processor do
           end
 
           it 'logs the error' do
-            expect(logger).to receive(:error).with(error.message)
+            expect(logger).to receive(:error)
             subject
           end
         end
@@ -93,6 +95,7 @@ RSpec.describe Super::Flux::Reactor::Processor do
 
           before do
             allow(adapter).to receive(:deliver_message).and_raise(error)
+            allow(error).to receive(:full_message).and_return('FULL_MESSAGE')
           end
 
           it { is_expected.to eq(false) }
@@ -103,7 +106,7 @@ RSpec.describe Super::Flux::Reactor::Processor do
           end
 
           it 'logs the error' do
-            expect(logger).to receive(:error).with(error.message)
+            expect(logger).to receive(:error).with(error.full_message)
             subject
           end
         end

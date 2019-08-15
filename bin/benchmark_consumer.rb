@@ -4,14 +4,12 @@ require_relative '../lib/super/flux'
 
 Super::Flux.configure do |config|
   config.kafka = {
-    # logger: Logger.new(STDOUT),
-    brokers: ENV.fetch('KAFKA_BROKERS', 'localhost:9092').split(','),
+    seed_brokers: ENV.fetch('KAFKA_BROKERS', 'localhost:9092').split(','),
     client_id: 'flux'
   }
 
   config.producer_options = {
     max_buffer_size: 10_000,
-    compression_codec: :lz4,
     required_acks: 1
   }
 end

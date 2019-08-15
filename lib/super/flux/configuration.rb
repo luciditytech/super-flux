@@ -32,8 +32,7 @@ module Super
       def setup_adapter
         return unless kafka.is_a?(Hash)
 
-        adapter_options = kafka.reject { |k, _| k == :brokers }
-        self.adapter = Kafka.new(kafka[:brokers], adapter_options)
+        self.adapter = Kafka.new(**kafka)
       end
 
       def setup_producer
