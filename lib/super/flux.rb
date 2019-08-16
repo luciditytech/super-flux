@@ -13,7 +13,6 @@ require_relative 'flux/adapter_resolver'
 require_relative 'flux/consumer_factory'
 require_relative 'flux/configuration'
 require_relative 'flux/task'
-require_relative 'flux/worker_factory'
 require_relative 'flux/worker'
 require_relative 'flux/producer'
 

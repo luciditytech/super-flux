@@ -63,7 +63,7 @@ module Super
 
         def reset_consumer(topic, partition, offset)
           logger.info("Throttled - #{topic} #{partition} #{offset}")
-          consumer.pause(topic, partition, timeout: 30)
+          consumer.pause(topic, partition, timeout: 10)
           consumer.seek(topic, partition, offset)
         end
       end

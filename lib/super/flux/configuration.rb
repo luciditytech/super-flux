@@ -32,7 +32,7 @@ module Super
       def setup_adapter
         return unless kafka.is_a?(Hash)
 
-        self.adapter = Kafka.new(**kafka)
+        self.adapter = Kafka.new(**{ seed_brokers: kafka[:brokers] }.merge(kafka))
       end
 
       def setup_producer

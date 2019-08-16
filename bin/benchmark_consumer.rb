@@ -20,6 +20,8 @@ class TestTask
   topic 'tracks'
   group_id 'test'
   retries 2
+  wait ->(stage) { stage * 2 }
+  # wait 0
 
   def call(_data)
     raise

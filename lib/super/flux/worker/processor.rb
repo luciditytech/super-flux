@@ -21,7 +21,11 @@ module Super
         private
 
         def throttle(message)
-          raise if Governor.call(message, stage_for(message.topic))
+          raise if Governor.call(
+            message,
+            stage_for(message.topic),
+            wait: task.settings.wait
+          )
         end
 
         def execute(message)
@@ -38,7 +42,7 @@ module Super
           consumer.mark_message_as_processed(message)
           true
         rescue StandardError => e
-          logger.error(e.full_message)
+          # logger.error(e.full_message)
           false
         end
 

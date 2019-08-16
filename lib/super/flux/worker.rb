@@ -27,11 +27,11 @@ module Super
       def start
         logger.info('Starting Flux Processor!')
 
-        @workers = @reactors.map do |reactor|
+        @threads = @reactors.map do |reactor|
           Thread.new { reactor.start }
         end
 
-        @workers.map(&:join)
+        @threads.map(&:join)
       end
 
       def stop

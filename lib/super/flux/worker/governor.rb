@@ -6,9 +6,10 @@ module Super
       class Governor
         include Super::Service
 
-        def call(message, stage)
+        def call(message, stage, wait: nil)
           @message = message
           @stage = stage
+          @wait = wait
           return false if @stage.zero?
 
           early?
@@ -17,8 +18,14 @@ module Super
         private
 
         # The minimum amount of time retries at this stage should wait.
-        def lead_time
-          @lead_time ||= @stage**4 + 15 + (rand(30) * (@stage + 1))
+        def wait_time
+          return @wait_time if defined?(@wait_time)
+
+          @wait_time = if @wait
+                         @wait.is_a?(Proc) ? @wait.call(@stage) : @wait
+                       else
+                         @stage**4 + 15 + (rand(30) * (@stage + 1))
+                       end
         end
 
         # Time that has already passed since the message was first created.
@@ -29,12 +36,11 @@ module Super
         # The minimum remaining time the consumer should wait before processing
         # more messages from this topic and partition.
         def timeout
-          @timeout ||= (lead_time - elapsed_time).to_i
+          @timeout ||= (wait_time - elapsed_time).to_i
         end
 
         def early?
-          false
-          # timeout.positive?
+          timeout.positive?
         end
       end
     end

@@ -7,8 +7,9 @@ module Super
   module Flux
     module Task
       DSL = %w[topic
-               group_id
                retries
+               wait
+               group_id
                offset_commit_interval
                offset_commit_threshold].freeze
 
