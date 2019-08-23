@@ -3,6 +3,8 @@
 require_relative 'worker/reactor'
 require_relative 'worker/governor'
 require_relative 'worker/processor'
+require_relative 'worker/resource_map_factory'
+require_relative 'worker/reactor_factory'
 
 module Super
   module Flux
@@ -17,8 +19,6 @@ module Super
       def initialize(**args)
         super(args)
         self.options ||= {}
-        setup_resource_map
-        setup_reactors
 
         Signal.trap('INT') { stop }
         Signal.trap('TERM') { stop }
@@ -26,11 +26,7 @@ module Super
 
       def start
         logger.info('Starting Flux Processor!')
-
-        @threads = @reactors.map do |reactor|
-          Thread.new { reactor.start }
-        end
-
+        @threads = reactors.map { |reactor| Thread.new { reactor.start } }
         @threads.map(&:join)
       end
 
@@ -41,45 +37,28 @@ module Super
       private
 
       def active_stages
-        (stages || (0..task.settings.retries))
+        @active_stages ||= (stages || (0..task.settings.retries))
       end
 
-      def setup_resource_map
-        @resource_map = {}
-
-        active_stages.each do |stage|
-          adapter = Kafka.new(**options.fetch(:kafka, {}))
-          @resource_map[task.topics[stage]] = [adapter, consumer_for(adapter, stage)]
-        end
+      def resource_map
+        @resource_map ||= ResourceMapFactory.call(
+          stages: active_stages,
+          task: task,
+          kafka: options[:kafka]
+        )
       end
 
-      def setup_reactors
-        @reactors = @resource_map.map do |topic, (adapter, consumer)|
-          Reactor.new(
+      def reactors
+        @reactors ||= resource_map.map do |topic, resource_options|
+          ReactorFactory.call(
+            task: task,
+            adapter: resource_options[:adapter],
             logger: logger,
             topic: topic,
-            consumer: consumer,
-            processor: processor_for(adapter, consumer),
+            consumer: resource_options[:consumer],
             options: options
           )
         end
-      end
-
-      def consumer_for(adapter, stage)
-        adapter.consumer(
-          group_id: [task.settings.group_id, stage].join('-'),
-          offset_commit_interval: task.settings.offset_commit_interval || 5,
-          offset_commit_threshold: task.settings.offset_commit_threshold || 10_000
-        )
-      end
-
-      def processor_for(adapter, consumer)
-        Processor.new(
-          task: task,
-          adapter: adapter,
-          consumer: consumer,
-          logger: logger
-        )
       end
     end
   end
