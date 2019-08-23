@@ -33,7 +33,7 @@ module Super
           consumer.mark_message_as_processed(message)
           true
         rescue StandardError => e
-          # logger.error(e.full_message)
+          logger.error(e.full_message)
           false
         end
 
@@ -42,7 +42,7 @@ module Super
           consumer.mark_message_as_processed(message)
           true
         rescue StandardError => e
-          # logger.error(e.full_message)
+          logger.error(e.full_message)
           false
         end
 
