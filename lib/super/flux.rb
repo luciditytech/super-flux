@@ -13,8 +13,7 @@ require_relative 'flux/adapter_resolver'
 require_relative 'flux/consumer_factory'
 require_relative 'flux/configuration'
 require_relative 'flux/task'
-require_relative 'flux/reactor_factory'
-require_relative 'flux/reactor'
+require_relative 'flux/worker'
 require_relative 'flux/producer'
 
 module Super
@@ -36,14 +35,16 @@ module Super
     end
 
     def self.run(task, stages: nil)
-      @reactor = ReactorFactory.call(
+      @worker = Worker.new(
+        logger: logger,
         task: task,
-        adapter: adapter,
         stages: stages,
-        logger: logger
+        options: {
+          kafka: configuration.kafka
+        }
       )
 
-      @reactor.start
+      @worker.start
     end
 
     def self.configuration

@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe Super::Flux::Reactor::Processor do
+RSpec.describe Super::Flux::Worker::Processor do
   describe '#call' do
     subject { instance.call(message) }
 
@@ -11,29 +11,28 @@ RSpec.describe Super::Flux::Reactor::Processor do
         task: task,
         logger: logger,
         consumer: consumer,
-        adapter: adapter,
-        topic_manager: topic_manager
+        adapter: adapter
       )
     end
 
     let(:message) { double(topic: 'TOPIC', value: 'VALUE') }
+    let(:topics) { %w[TOPIC TOPIC-try-1] }
     let(:task) { double }
+    let(:task_settings) { double(wait: 10) }
     let(:logger) { double }
     let(:consumer) { double }
     let(:adapter) { double }
-    let(:topic_manager) { double }
     let(:stage) { 0 }
-    let(:next_topic) { double }
 
     before do
-      allow(topic_manager).to receive(:stage_for).with(message.topic).and_return(0)
-      allow(topic_manager).to receive(:next_topic_for).with(message.topic).and_return(next_topic)
+      allow(task).to receive(:topics).and_return(topics)
+      allow(task).to receive(:settings).and_return(task_settings)
     end
 
     context 'when the message is throttled' do
       before do
-        allow(Super::Flux::Reactor::Governor).to receive(:call)
-          .with(message, stage)
+        allow(Super::Flux::Worker::Governor).to receive(:call)
+          .with(message, stage, wait: task_settings.wait)
           .and_return(true)
       end
 
@@ -42,9 +41,10 @@ RSpec.describe Super::Flux::Reactor::Processor do
       end
     end
 
-    context 'and the message is not throttled' do
+    context 'when the message is not throttled' do
       before do
-        allow(Super::Flux::Reactor::Governor).to receive(:call).and_return(false)
+        allow(Super::Flux::Worker::Governor).to receive(:call).and_return(false)
+        allow(logger).to receive(:debug)
       end
 
       context 'and execution succeeds' do
@@ -61,6 +61,7 @@ RSpec.describe Super::Flux::Reactor::Processor do
 
         before do
           allow(task).to receive(:call).with(message.value).and_raise(error)
+          allow(error).to receive(:full_message).and_return('FULL_MESSAGE')
           allow(logger).to receive(:error)
         end
 
@@ -73,7 +74,7 @@ RSpec.describe Super::Flux::Reactor::Processor do
           it { is_expected.to eq(true) }
 
           it 'schedules the retry' do
-            expect(adapter).to receive(:deliver_message).with(message.value, topic: next_topic)
+            expect(adapter).to receive(:deliver_message).with(message.value, topic: topics.last)
             subject
           end
 
@@ -83,7 +84,7 @@ RSpec.describe Super::Flux::Reactor::Processor do
           end
 
           it 'logs the error' do
-            expect(logger).to receive(:error).with(error.message)
+            expect(logger).to receive(:error)
             subject
           end
         end
@@ -93,17 +94,18 @@ RSpec.describe Super::Flux::Reactor::Processor do
 
           before do
             allow(adapter).to receive(:deliver_message).and_raise(error)
+            allow(error).to receive(:full_message).and_return('FULL_MESSAGE')
           end
 
           it { is_expected.to eq(false) }
 
           it 'schedules the retry' do
-            expect(adapter).to receive(:deliver_message).with(message.value, topic: next_topic)
+            expect(adapter).to receive(:deliver_message).with(message.value, topic: topics.last)
             subject
           end
 
           it 'logs the error' do
-            expect(logger).to receive(:error).with(error.message)
+            expect(logger).to receive(:error).with(error.full_message)
             subject
           end
         end

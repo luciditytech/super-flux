@@ -2,63 +2,39 @@
 
 require 'spec_helper'
 
-RSpec.describe Super::Flux::Reactor do
-  TOPICS = %w[TOPIC TOPIC-try-1 TOPIC-dlq].freeze
-
+RSpec.describe Super::Flux::Worker::Reactor do
   let(:instance) do
     described_class.new(
-      topic_manager: topic_manager,
+      logger: logger,
+      topic: topic,
       consumer: consumer,
       processor: processor,
-      logger: logger,
-      options: {
-        run_once: true
-      }
+      options: { run_once: true }
     )
   end
 
-  let(:task) { double }
   let(:logger) { double }
+  let(:topic) { 'TOPIC' }
   let(:consumer) { double }
-  let(:topic_manager) { double }
   let(:processor) { double }
-  let(:topics) { TOPICS }
 
   describe '#start' do
     subject { instance.start }
-
     let(:message) { double }
+
+    shared_examples_for 'a subscriber' do
+      it 'subscribes to topic' do
+        subject
+      rescue StandardError
+        expect(consumer).to have_received(:subscribe).with(topic)
+      end
+    end
 
     before do
       allow(logger).to receive(:info)
-      allow(topic_manager).to receive(:active_topics).and_return(topics)
-
-      TOPICS.each do |topic|
-        allow(consumer).to receive(:subscribe).with(topic)
-      end
-
+      allow(consumer).to receive(:subscribe).with(topic)
       allow(consumer).to receive(:each_message).and_yield(message)
       allow(consumer).to receive(:stop)
-    end
-
-    shared_examples_for 'a topic subscriber' do
-      it 'subscribes to the main topic' do
-        subject
-      rescue StandardError
-        expect(consumer).to have_received(:subscribe).with('TOPIC')
-      end
-
-      it 'subscribes to the retry topic' do
-        subject
-      rescue StandardError
-        expect(consumer).to have_received(:subscribe).with('TOPIC-try-1')
-      end
-
-      it 'does not subscribe to the DLQ topic' do
-        subject
-      rescue StandardError
-        expect(consumer).to_not have_received(:subscribe).with('TOPIC-dlq')
-      end
     end
 
     context 'when the message executes correctly' do
@@ -66,7 +42,7 @@ RSpec.describe Super::Flux::Reactor do
         allow(processor).to receive(:call).with(message).and_return(true)
       end
 
-      it_behaves_like 'a topic subscriber'
+      it_behaves_like 'a subscriber'
 
       it 'executes the message' do
         expect(processor).to receive(:call).with(message)
@@ -86,7 +62,7 @@ RSpec.describe Super::Flux::Reactor do
         allow(consumer).to receive(:seek)
       end
 
-      it_behaves_like 'a topic subscriber'
+      it_behaves_like 'a subscriber'
 
       it 'executes the message' do
         subject
