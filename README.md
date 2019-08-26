@@ -71,17 +71,6 @@ class AwesomeTask
 end
 ```
 
-Tasks are processed by instantiating reactors:
-
-```ruby
-#!/usr/bin/env ruby
-
-require_relative '../config/boot'
-
-task = Kernel.const_get(ARGV[0])
-Super::Flux.run(task)
-```
-
 Example usage for a simple task with 5 retries (6 stages including the Dead Letter Queue):
 
 Running the main stage:

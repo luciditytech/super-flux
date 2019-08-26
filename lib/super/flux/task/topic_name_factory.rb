@@ -2,7 +2,7 @@
 
 module Super
   module Flux
-    class Reactor
+    module Task
       class TopicNameFactory
         include Super::Service
         extend Forwardable
