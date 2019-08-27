@@ -26,10 +26,17 @@ module Super
 
         def consumer_for(adapter, stage)
           adapter.consumer(
-            group_id: [@task.settings.group_id, stage].join('-'),
+            group_id: group_id_for(stage),
             offset_commit_interval: @task.settings.offset_commit_interval || 5,
             offset_commit_threshold: @task.settings.offset_commit_threshold || 10_000
           )
+        end
+
+        def group_id_for(stage)
+          base_group_id = @task.settings.group_id
+          return base_group_id if stage.zero?
+
+          [base_group_id, stage].join('-')
         end
       end
     end
