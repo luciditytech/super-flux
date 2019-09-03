@@ -55,10 +55,16 @@ module Super
             raise unless process(message)
           end
         rescue Kafka::ProcessingError => e
+          NewRelic::Agent.notice_error(e)
+
           reset_consumer(e.topic, e.partition, e.offset)
           return stop unless alive?
 
           retry
+        rescue Exception => e
+          NewRelic::Agent.notice_error(e)
+
+          raise
         end
 
         def reset_consumer(topic, partition, offset)

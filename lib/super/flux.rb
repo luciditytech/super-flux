@@ -35,16 +35,22 @@ module Super
     end
 
     def self.run(task, stages: nil)
-      @worker = Worker.new(
-        logger: logger,
-        task: task,
-        stages: stages,
-        options: {
-          kafka: configuration.kafka
-        }
-      )
+      begin
+        @worker = Worker.new(
+          logger: logger,
+          task: task,
+          stages: stages,
+          options: {
+            kafka: configuration.kafka
+          }
+        )
 
-      @worker.start
+        @worker.start
+      rescue Exception => e
+        NewRelic::Agent.notice_error(e)
+
+        raise e
+      end
     end
 
     def self.configuration
