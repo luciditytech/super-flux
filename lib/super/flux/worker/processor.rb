@@ -29,7 +29,7 @@ module Super
         end
 
         def execute(message)
-          task.call(message.value)
+          instrument { task.call(message.value) }
           consumer.mark_message_as_processed(message)
           true
         rescue StandardError => e
@@ -52,6 +52,13 @@ module Super
 
         def next_topic_for(topic)
           task.topics[stage_for(topic) + 1]
+        end
+
+        def instrument
+          yield
+        rescue Exception => e
+          NewRelic::Agent.notify_error(e)
+          raise(e)
         end
       end
     end
