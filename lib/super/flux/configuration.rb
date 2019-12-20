@@ -11,6 +11,10 @@ module Super
         self[:logger] || self.logger = Logger.new(STDOUT)
       end
 
+      def pool
+        self[:pool] || setup_pool
+      end
+
       def adapter
         self[:adapter] || setup_adapter
       end
@@ -28,6 +32,14 @@ module Super
       end
 
       private
+
+      def setup_pool
+        return unless kafka.is_a?(Hash)
+
+        self.pool = Super::ResourcePool.new(size: 8) do
+          Kafka.new(**{ seed_brokers: kafka[:brokers] }.merge(kafka))
+        end
+      end
 
       def setup_adapter
         return unless kafka.is_a?(Hash)

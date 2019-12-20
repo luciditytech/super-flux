@@ -43,21 +43,19 @@ RSpec.describe Super::Flux::Worker do
       allow(logger).to receive(:info)
       allow(Super::Flux::Worker::ResourceMapFactory).to receive(:call).and_return(resource_map)
 
-      allow(Super::Flux::Worker::ReactorFactory).to receive(:call).with(
+      allow(Super::Flux::Worker::Reactor).to receive(:new).with(
         task: task,
         logger: logger,
         topic: 'TOPIC',
         options: params[:options],
-        adapter: resource_map['TOPIC'][:adapter],
         consumer: resource_map['TOPIC'][:consumer]
       ).and_return(main_reactor)
 
-      allow(Super::Flux::Worker::ReactorFactory).to receive(:call).with(
+      allow(Super::Flux::Worker::Reactor).to receive(:new).with(
         task: task,
         logger: logger,
         topic: 'TOPIC-try-1',
         options: params[:options],
-        adapter: resource_map['TOPIC-try-1'][:adapter],
         consumer: resource_map['TOPIC-try-1'][:consumer]
       ).and_return(secondary_reactor)
 
@@ -68,8 +66,7 @@ RSpec.describe Super::Flux::Worker do
     it 'setups up the resource map' do
       expect(Super::Flux::Worker::ResourceMapFactory).to receive(:call).with(
         stages: stages,
-        task: task,
-        kafka: kafka_options
+        task: task
       )
 
       subject

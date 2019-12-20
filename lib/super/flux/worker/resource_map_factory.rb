@@ -6,16 +6,13 @@ module Super
       class ResourceMapFactory
         include Super::Service
 
-        def call(stages:, kafka: {}, task:)
+        def call(stages:, task:)
           @task = task
           map = {}
 
           stages.each do |stage|
-            adapter = Kafka.new(kafka)
-
             map[task.topics[stage]] = {
-              adapter: adapter,
-              consumer: consumer_for(adapter, stage)
+              consumer: consumer_for(stage)
             }
           end
 
@@ -24,12 +21,14 @@ module Super
 
         private
 
-        def consumer_for(adapter, stage)
-          adapter.consumer(
-            group_id: group_id_for(stage),
-            offset_commit_interval: @task.settings.offset_commit_interval || 5,
-            offset_commit_threshold: @task.settings.offset_commit_threshold || 10_000
-          )
+        def consumer_for(stage)
+          Super::Flux.pool.with do |adapter|
+            adapter.consumer(
+              group_id: group_id_for(stage),
+              offset_commit_interval: @task.settings.offset_commit_interval || 5,
+              offset_commit_threshold: @task.settings.offset_commit_threshold || 10_000
+            )
+          end
         end
 
         def group_id_for(stage)

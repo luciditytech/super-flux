@@ -9,14 +9,10 @@ module Super
 
         attribute :logger
         attribute :topic
+        attribute :task
         attribute :consumer
-        attribute :processor
         attribute :options
         attribute :state
-
-        CONSUMPTION_OPTIONS = {
-          automatically_mark_as_processed: false
-        }.freeze
 
         def initialize(**args)
           super(args)
@@ -50,15 +46,26 @@ module Super
           return unless alive?
 
           @loops += 1
-
-          consumer.each_message(**CONSUMPTION_OPTIONS) do |message|
-            raise unless process(message)
-          end
+          consumer.each_batch { |batch| process(batch) }
         rescue Kafka::ProcessingError => e
           reset_consumer(e.topic, e.partition, e.offset)
           return stop unless alive?
 
           retry
+        end
+
+        def process(batch)
+          work = []
+
+          batch.messages.each do |message|
+            work << Thread.new { Processor.call(task, message) }
+            next if work.size <= 10
+
+            work.map(&:join)
+            work = []
+          end
+
+          work.map(&:join)
         end
 
         def reset_consumer(topic, partition, offset)
