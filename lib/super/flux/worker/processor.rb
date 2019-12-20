@@ -4,54 +4,40 @@ module Super
   module Flux
     class Worker
       class Processor
-        include Super::Struct
+        include Super::Service
 
-        attribute :logger
-        attribute :task
-        attribute :adapter
-        attribute :consumer
-
-        def call(message)
-          throttle(message)
-          return true if execute(message)
-
-          prepare_retry(message)
+        def call(task, message)
+          @task = task
+          execute(message) || prepare_retry(message)
         end
 
         private
 
-        def throttle(message)
-          raise if Governor.call(
-            message,
-            stage_for(message.topic),
-            wait: task.settings.wait
-          )
-        end
-
         def execute(message)
-          task.call(message.value)
-          consumer.mark_message_as_processed(message)
+          @task.call(message.value)
           true
         rescue StandardError => e
-          logger.error(e.full_message)
+          puts e.full_message
           false
         end
 
         def prepare_retry(message)
-          adapter.deliver_message(message.value, topic: next_topic_for(message.topic))
-          consumer.mark_message_as_processed(message)
+          Super::Flux.pool.with do |adapter|
+            adapter.deliver_message(message.value, topic: next_topic_for(message.topic))
+          end
+
           true
         rescue StandardError => e
-          logger.error(e.full_message)
+          puts e.full_message
           false
         end
 
-        def stage_for(topic)
-          task.topics.index(topic)
+        def next_topic_for(topic)
+          @task.topics[stage_for(topic) + 1]
         end
 
-        def next_topic_for(topic)
-          task.topics[stage_for(topic) + 1]
+        def stage_for(topic)
+          @task.topics.index(topic)
         end
       end
     end

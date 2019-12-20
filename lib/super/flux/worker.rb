@@ -4,7 +4,6 @@ require_relative 'worker/reactor'
 require_relative 'worker/governor'
 require_relative 'worker/processor'
 require_relative 'worker/resource_map_factory'
-require_relative 'worker/reactor_factory'
 
 module Super
   module Flux
@@ -50,12 +49,11 @@ module Super
 
       def reactors
         @reactors ||= resource_map.map do |topic, resource_options|
-          ReactorFactory.call(
-            task: task,
-            adapter: resource_options[:adapter],
+          Reactor.new(
             logger: logger,
             topic: topic,
             consumer: resource_options[:consumer],
+            task: task,
             options: options
           )
         end

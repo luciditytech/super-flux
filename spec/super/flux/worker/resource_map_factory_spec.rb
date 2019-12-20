@@ -26,11 +26,9 @@ RSpec.describe Super::Flux::Worker::ResourceMapFactory do
     let(:expected_result) do
       {
         'TOPIC' => {
-          adapter: adapters[0],
           consumer: consumers[0]
         },
         'TOPIC-try-1' => {
-          adapter: adapters[1],
           consumer: consumers[1]
         }
       }

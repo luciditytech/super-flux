@@ -14,7 +14,6 @@ module Super
             adapter = Kafka.new(kafka)
 
             map[task.topics[stage]] = {
-              adapter: adapter,
               consumer: consumer_for(adapter, stage)
             }
           end
