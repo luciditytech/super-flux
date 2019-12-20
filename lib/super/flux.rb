@@ -5,6 +5,7 @@ require 'forwardable'
 require 'kafka'
 require 'super'
 require 'super/struct'
+require 'super/resource_pool'
 
 require_relative 'flux/version'
 require_relative 'flux/errors'
@@ -26,6 +27,8 @@ module Super
                    :concurrency=,
                    :adapter,
                    :adapter=,
+                   :pool,
+                   :pool=,
                    :producer,
                    :producer=,
                    :environment
