@@ -66,8 +66,7 @@ RSpec.describe Super::Flux::Worker do
     it 'setups up the resource map' do
       expect(Super::Flux::Worker::ResourceMapFactory).to receive(:call).with(
         stages: stages,
-        task: task,
-        kafka: kafka_options
+        task: task
       )
 
       subject

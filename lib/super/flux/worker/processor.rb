@@ -23,6 +23,7 @@ module Super
 
         def prepare_retry(message)
           Super::Flux.pool.with do |adapter|
+            puts next_topic_for(message.topic)
             adapter.deliver_message(message.value, topic: next_topic_for(message.topic))
           end
 

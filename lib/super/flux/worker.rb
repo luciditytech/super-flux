@@ -42,8 +42,7 @@ module Super
       def resource_map
         @resource_map ||= ResourceMapFactory.call(
           stages: active_stages,
-          task: task,
-          kafka: options[:kafka]
+          task: task
         )
       end
 
