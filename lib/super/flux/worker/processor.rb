@@ -8,7 +8,9 @@ module Super
 
         def call(task, message)
           @task = task
-          execute(message) || prepare_retry(message)
+          return if execute(message)
+
+          prepare_retry(message)
         end
 
         private
