@@ -14,6 +14,8 @@ Super::Flux.configure do |config|
   }
 end
 
+$i = Concurrent::AtomicFixnum.new
+
 class TestTask
   include Super::Flux::Task
 
@@ -24,7 +26,9 @@ class TestTask
   # wait 0
 
   def call(_data)
-    raise
+    # raise
+    $i.increment(1)
+    puts $i.value
   end
 end
 

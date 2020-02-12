@@ -66,6 +66,7 @@ module Super
           end
 
           work.map(&:join)
+          consumer.commit_offsets
         end
 
         def reset_consumer(topic, partition, offset)
