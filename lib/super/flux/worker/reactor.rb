@@ -46,7 +46,7 @@ module Super
           return unless alive?
 
           @loops += 1
-          consumer.each_batch { |batch| process(batch) }
+          process
         rescue Kafka::ProcessingError => e
           reset_consumer(e.topic, e.partition, e.offset)
           return stop unless alive?
@@ -54,10 +54,10 @@ module Super
           retry
         end
 
-        def process(batch)
+        def process
           work = []
 
-          batch.messages.each do |message|
+          consumer.each_message do |message|
             work << Thread.new { Processor.call(task, message) }
             next if work.size <= 10
 
