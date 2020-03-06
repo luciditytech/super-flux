@@ -10,7 +10,7 @@ GIT
 PATH
   remote: .
   specs:
-    super-flux (0.3.0)
+    super-flux (0.3.2)
       concurrent-ruby
       ruby-kafka
       super
