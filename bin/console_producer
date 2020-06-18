@@ -1,0 +1,29 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'bundler/setup'
+require 'super'
+require 'super/flux'
+require 'json'
+
+Super::Flux.configure do |config|
+  config.kafka = {
+    seed_brokers: ENV.fetch('KAFKA_BROKERS', 'localhost:9092').split(','),
+    client_id: 'flux'
+  }
+
+  config.producer_options = {
+    max_buffer_size: 10_000,
+    compression_codec: :lz4,
+    required_acks: 1
+  }
+end
+
+class Producer
+  include Super::Flux::Producer
+
+  topic ENV['TOPIC']
+end
+
+require 'irb'
+IRB.start(__FILE__)

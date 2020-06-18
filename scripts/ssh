@@ -1,0 +1,4 @@
+POD=$(kubectl get pods -n super-flux | tail -n +2 | head -n 1 | awk '{print $1}')
+echo "Attaching to $POD"
+echo ""
+kubectl exec -it "$POD" -n super-flux -- bash
