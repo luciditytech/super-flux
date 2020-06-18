@@ -6,6 +6,7 @@ require 'super'
 require 'super/flux'
 require 'super/struct'
 require 'json'
+require 'securerandom'
 
 Super::Flux.configure do |config|
   config.kafka = {
@@ -14,7 +15,7 @@ Super::Flux.configure do |config|
   }
 
   config.producer_options = {
-    max_buffer_size: 10_000,
+    max_buffer_size: 1,
     compression_codec: :lz4,
     required_acks: 1
   }
@@ -24,7 +25,7 @@ class StdoutConsumerTask
   include Super::Flux::Task
 
   topic ENV['TOPIC']
-  group_id 'stdout-consumer-task'
+  group_id "stdout-consumer-task-#{SecureRandom.hex}"
   retries 0
   wait 0
 

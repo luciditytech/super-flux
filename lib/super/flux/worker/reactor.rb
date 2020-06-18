@@ -23,7 +23,7 @@ module Super
 
         def start
           self.state = :online
-          consumer.subscribe(topic, max_bytes_per_partition: 128 * 1_024)
+          consumer.subscribe(topic, max_bytes_per_partition: 128 * 1_024, start_from_beginning: false)
           run while alive?
         end
 
