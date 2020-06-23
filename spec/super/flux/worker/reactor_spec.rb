@@ -16,7 +16,10 @@ RSpec.describe Super::Flux::Worker::Reactor do
   let(:logger) { double }
   let(:topic) { 'TOPIC' }
   let(:consumer) { double }
-  let(:task) { double }
+  let(:start_from_beginning) { true }
+  let(:settings) { double(start_from_beginning: start_from_beginning) }
+  let(:task) { double(settings: settings) }
+  let(:max_bytes_per_partition) { 128 * 1_024 }
 
   describe '#start' do
     subject { instance.start }
@@ -27,13 +30,21 @@ RSpec.describe Super::Flux::Worker::Reactor do
       it 'subscribes to topic' do
         subject
       rescue StandardError
-        expect(consumer).to have_received(:subscribe).with(topic)
+        expect(consumer).to have_received(:subscribe).with(
+          topic,
+          start_from_beginning: start_from_beginning,
+          max_bytes_per_partition: max_bytes_per_partition
+        )
       end
     end
 
     before do
       allow(logger).to receive(:info)
-      allow(consumer).to receive(:subscribe).with(topic)
+      allow(consumer).to receive(:subscribe).with(
+        topic,
+        start_from_beginning: start_from_beginning,
+        max_bytes_per_partition: max_bytes_per_partition
+      )
       allow(consumer).to receive(:each_batch).and_yield(batch)
       allow(consumer).to receive(:stop)
     end

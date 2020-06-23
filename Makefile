@@ -1,8 +1,14 @@
 REPOSITORY=500669969333.dkr.ecr.us-east-1.amazonaws.com/super-flux
-TAG=$(shell git describe --abbrev=1 --tags --always)
+TAG=`git describe --abbrev=1 --tags --always`
 IMAGE="$(REPOSITORY):v$(TAG)"
 
 default: build
+
+tag:
+	@echo "Current tag is '$(TAG)'"
+
+image:
+	@echo "Current image is '$(IMAGE)'"
 
 build:
 	@echo "## Building the docker image ##"
@@ -13,7 +19,7 @@ build-no-cache:
 	@docker build --no-cache -t $(IMAGE) .
 
 login:
-	$(shell aws ecr get-login --no-include-email)
+	`aws ecr get-login --no-include-email`
 
 push: login
 	@echo "## Pushing image to AWS ##"
@@ -42,9 +48,3 @@ ssh-current-context:
 
 deploy-current-cluster-context:
 	@kubectl set image deployment/super-flux-console super-flux=$(IMAGE) -n super-flux
-
-rollback-staging: deploy-staging
-	@echo "## Rolling back - staging ##"
-
-rollback-production: deploy-production
-	@echo "## Rolling back - production ##"
