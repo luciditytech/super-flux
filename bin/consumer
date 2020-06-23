@@ -1,0 +1,14 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'bundler/setup'
+require 'kafka'
+
+puts "Starting consuming from: #{ENV['TOPIC']}"
+puts ''
+
+kafka = Kafka.new(ENV.fetch('KAFKA_BROKERS', 'localhost:9092').split(','))
+
+kafka.each_message(topic: ENV['TOPIC'], start_from_beginning: false) do |message|
+  puts "#{Time.now} - message: #{message.value}"
+end

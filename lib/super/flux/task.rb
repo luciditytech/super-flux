@@ -10,6 +10,7 @@ module Super
                retries
                wait
                group_id
+               start_from_beginning
                offset_commit_interval
                offset_commit_threshold].freeze
 

@@ -9,6 +9,7 @@ module Super
 
         attribute :logger
         attribute :topic
+        attribute :start_from_beginning
         attribute :task
         attribute :consumer
         attribute :options
@@ -23,7 +24,11 @@ module Super
 
         def start
           self.state = :online
-          consumer.subscribe(topic, max_bytes_per_partition: 128 * 1_024, start_from_beginning: false)
+          consumer.subscribe(
+            topic,
+            max_bytes_per_partition: 128 * 1_024,
+            start_from_beginning: task.settings.start_from_beginning || false
+          )
           run while alive?
         end
 

@@ -18,7 +18,7 @@ module Super
 
         private
 
-        def_delegators :@settings, :topic, :retries, :group_id
+        def_delegators :@settings, :topic, :retries, :group_id, :start_from_beginning
 
         def stage_topic
           [topic, group_id, 'try', @stage].compact.join('-')
